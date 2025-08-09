@@ -98,7 +98,7 @@ const DashboardLayout = () => {
     },
   ]);
 
-  const API_BASE = "http://localhost:8787";
+  const API_BASE = "/api";
 
   // Load patients from server on mount (falls back to seeded list on error)
   useEffect(() => {

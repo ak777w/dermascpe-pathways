@@ -55,7 +55,7 @@ export default function ManagePatientPhotosDialog({ patient, onSave, trigger }: 
     // Try to discover LAN address of upload server for mobile devices
     (async () => {
       try {
-        const res = await fetch(`http://localhost:8787/addresses`);
+        const res = await fetch(`/api/addresses`);
         const json = await res.json();
         if (Array.isArray(json.addresses) && json.addresses.length > 0) {
           setServerOrigin(json.addresses[0]);
@@ -63,7 +63,7 @@ export default function ManagePatientPhotosDialog({ patient, onSave, trigger }: 
           setServerOrigin(`http://localhost:8787`);
         }
       } catch {
-        setServerOrigin(`http://localhost:8787`);
+        setServerOrigin(`${window.location.protocol}//${window.location.hostname}:8787`);
       }
     })();
   }, [open]);
@@ -71,7 +71,7 @@ export default function ManagePatientPhotosDialog({ patient, onSave, trigger }: 
   useEffect(() => {
     if (!open) return;
     // assume upload server on localhost:8787
-    const origin = serverOrigin ?? `http://localhost:8787`;
+    const origin = serverOrigin ?? `${window.location.protocol}//${window.location.hostname}:8787`;
     const quick = `${origin}/quick-upload?patientId=${encodeURIComponent(String(patient.id))}`;
     setQrUrl(`${origin}/qr?text=${encodeURIComponent(quick)}`);
     // Client-side QR fallback
@@ -82,7 +82,7 @@ export default function ManagePatientPhotosDialog({ patient, onSave, trigger }: 
 
   async function syncFromServer() {
     try {
-      const origin = serverOrigin ?? `http://localhost:8787`;
+      const origin = serverOrigin ?? `${window.location.protocol}//${window.location.hostname}:8787`;
       const res = await fetch(`${origin}/photos?patientId=${encodeURIComponent(String(patient.id))}`);
       const json = await res.json();
       if (Array.isArray(json.photos)) setPhotos((prev) => [...json.photos, ...prev]);
