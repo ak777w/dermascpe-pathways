@@ -8,13 +8,14 @@ import type { Patient } from "@/types/patient";
 
 type EditPatientDialogProps = {
   patient: Patient;
-  onSave: (updated: Patient) => void;
+  onSave: (updated: Patient) => void | Promise<void>;
   trigger: React.ReactNode;
 };
 
 export default function EditPatientDialog({ patient, onSave, trigger }: EditPatientDialogProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Patient>(patient);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (open) setForm(patient);
@@ -24,10 +25,15 @@ export default function EditPatientDialog({ patient, onSave, trigger }: EditPati
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSave({ ...form });
-    setOpen(false);
+    try {
+      setIsSaving(true);
+      await Promise.resolve(onSave({ ...form }));
+      setOpen(false);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -78,7 +84,9 @@ export default function EditPatientDialog({ patient, onSave, trigger }: EditPati
             <DialogClose asChild>
               <Button type="button" variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

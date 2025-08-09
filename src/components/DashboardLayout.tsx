@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import NewPatientDialog from "@/components/NewPatientDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,36 +98,164 @@ const DashboardLayout = () => {
     },
   ]);
 
-  const addPatient = (data: { name: string; age: number; gender: string; phone: string; email: string; medicare: string }) => {
-    setPatients((prev) => {
-      const nextId = prev.length ? Math.max(...prev.map((p) => p.id)) + 1 : 1;
-      const newPatient: Patient = {
-        id: nextId,
-        name: data.name,
-        age: data.age,
-        gender: data.gender,
-        phone: data.phone,
-        email: data.email,
-        medicare: data.medicare,
-        lastVisit: "New",
-        nextAppointment: "Not scheduled",
-        riskLevel: "Low",
-        totalLesions: 0,
-        newLesions: 0,
-        status: "Active",
-        skinType: "Unknown",
-        familyHistory: "Unknown",
-      };
-      return [newPatient, ...prev];
-    });
+  const API_BASE = "http://localhost:8787";
+
+  // Load patients from server on mount (falls back to seeded list on error)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/patients`);
+        if (!res.ok) return; // keep local seed
+        const json = await res.json();
+        if (Array.isArray(json.patients)) {
+          setPatients(json.patients);
+        }
+      } catch {
+        // ignore and keep seed
+      }
+    })();
+  }, []);
+
+  const addPatient = async (data: { name: string; age: number; gender: string; phone: string; email: string; medicare: string }) => {
+    try {
+      const res = await fetch(`${API_BASE}/patients`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.name,
+          age: data.age,
+          gender: data.gender,
+          phone: data.phone,
+          email: data.email,
+          medicare: data.medicare,
+          lastVisit: "New",
+          nextAppointment: "Not scheduled",
+          riskLevel: "Low",
+          totalLesions: 0,
+          newLesions: 0,
+          status: "Active",
+          skinType: "Unknown",
+          familyHistory: "Unknown",
+        }),
+      });
+      if (res.ok) {
+        const created: Patient = await res.json();
+        setPatients((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
+      } else {
+        // fallback to local add
+        setPatients((prev) => {
+          const nextId = prev.length ? Math.max(...prev.map((p) => p.id)) + 1 : 1;
+          const newPatient: Patient = {
+            id: nextId,
+            name: data.name,
+            age: data.age,
+            gender: data.gender,
+            phone: data.phone,
+            email: data.email,
+            medicare: data.medicare,
+            lastVisit: "New",
+            nextAppointment: "Not scheduled",
+            riskLevel: "Low",
+            totalLesions: 0,
+            newLesions: 0,
+            status: "Active",
+            skinType: "Unknown",
+            familyHistory: "Unknown",
+          };
+          return [newPatient, ...prev];
+        });
+      }
+    } catch {
+      // offline fallback
+      setPatients((prev) => {
+        const nextId = prev.length ? Math.max(...prev.map((p) => p.id)) + 1 : 1;
+        const newPatient: Patient = {
+          id: nextId,
+          name: data.name,
+          age: data.age,
+          gender: data.gender,
+          phone: data.phone,
+          email: data.email,
+          medicare: data.medicare,
+          lastVisit: "New",
+          nextAppointment: "Not scheduled",
+          riskLevel: "Low",
+          totalLesions: 0,
+          newLesions: 0,
+          status: "Active",
+          skinType: "Unknown",
+          familyHistory: "Unknown",
+        };
+        return [newPatient, ...prev];
+      });
+    }
     setActiveView("patients");
   };
 
-  const updatePatient = (updated: Patient) => {
+  const updatePatient = async (updated: Patient) => {
+    try {
+      const res = await fetch(`${API_BASE}/patients/${encodeURIComponent(String(updated.id))}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+      if (res.ok) {
+        const saved: Patient = await res.json();
+        setPatients((prev) => prev.map((p) => (p.id === saved.id ? { ...p, ...saved } : p)));
+        return;
+      }
+      if (res.status === 404) {
+        // If patient not found on server, create it
+        const createRes = await fetch(`${API_BASE}/patients`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated),
+        });
+        if (createRes.ok) {
+          const created: Patient = await createRes.json();
+          setPatients((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    // fallback local update
     setPatients((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
   };
 
-  const updatePhotos = (patientId: number, photos: string[]) => {
+  const updatePhotos = async (patientId: number, photos: string[]) => {
+    try {
+      const res = await fetch(`${API_BASE}/patients/${encodeURIComponent(String(patientId))}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos }),
+      });
+      if (res.ok) {
+        const saved: Patient = await res.json();
+        setPatients((prev) => prev.map((p) => (p.id === saved.id ? { ...p, ...saved } : p)));
+        return;
+      }
+      if (res.status === 404) {
+        // If patient not found, create from current local copy with photos
+        const local = patients.find((p) => p.id === patientId);
+        if (local) {
+          const createRes = await fetch(`${API_BASE}/patients`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...local, photos }),
+          });
+          if (createRes.ok) {
+            const created: Patient = await createRes.json();
+            setPatients((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
+            return;
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+    // fallback local update
     setPatients((prev) => prev.map((p) => (p.id === patientId ? { ...p, photos } : p)));
   };
 

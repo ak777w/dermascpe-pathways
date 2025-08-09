@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "name": "john smith",
+    "age": 765,
+    "gender": "Female",
+    "phone": "r74839476",
+    "email": "bu@fn",
+    "medicare": "56",
+    "lastVisit": "New",
+    "nextAppointment": "Not scheduled",
+    "riskLevel": "Low",
+    "totalLesions": 0,
+    "newLesions": 0,
+    "status": "Active",
+    "skinType": "Unknown",
+    "familyHistory": "Unknown"
+  }
+]

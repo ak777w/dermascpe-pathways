@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 
 type ManagePatientPhotosDialogProps = {
   patient: Patient;
-  onSave: (updatedPhotos: string[]) => void;
+  onSave: (updatedPhotos: string[]) => void | Promise<void>;
   trigger: React.ReactNode;
 };
 
@@ -21,6 +21,7 @@ export default function ManagePatientPhotosDialog({ patient, onSave, trigger }: 
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [serverOrigin, setServerOrigin] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (open) setPhotos(patient.photos ?? []);
@@ -39,9 +40,14 @@ export default function ManagePatientPhotosDialog({ patient, onSave, trigger }: 
     Promise.all(readers).then((newImages) => setPhotos((prev) => [...newImages, ...prev]));
   }
 
-  function handleSubmit() {
-    onSave(photos);
-    setOpen(false);
+  async function handleSubmit() {
+    try {
+      setIsSaving(true);
+      await Promise.resolve(onSave(photos));
+      setOpen(false);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   useEffect(() => {
@@ -131,11 +137,11 @@ export default function ManagePatientPhotosDialog({ patient, onSave, trigger }: 
           </div>
         </div>
 
-        <DialogFooter>
+          <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">Close</Button>
           </DialogClose>
-          <Button type="button" onClick={handleSubmit}>Save</Button>
+          <Button type="button" onClick={handleSubmit} disabled={isSaving} aria-busy={isSaving}>{isSaving ? 'Saving...' : 'Save'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

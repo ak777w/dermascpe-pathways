@@ -11,6 +11,8 @@ const app = express();
 const PORT = process.env.UPLOAD_PORT || 8787;
 
 app.use(cors());
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
 // Disk persistence: files under server/uploads, tracked per patient in memory
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
@@ -19,6 +21,33 @@ app.use('/uploads', express.static(UPLOAD_DIR, { fallthrough: true }));
 
 // In-memory index of filenames per patientId
 const store = Object.create(null);
+
+// Patients persistence (JSON file on disk)
+const DATA_DIR = __dirname;
+const PATIENTS_FILE = path.join(DATA_DIR, 'patients.json');
+
+function readPatientsFromDisk() {
+  try {
+    if (!fs.existsSync(PATIENTS_FILE)) {
+      fs.writeFileSync(PATIENTS_FILE, JSON.stringify([] , null, 2));
+      return [];
+    }
+    const raw = fs.readFileSync(PATIENTS_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePatientsToDisk(patients) {
+  fs.writeFileSync(PATIENTS_FILE, JSON.stringify(patients, null, 2));
+}
+
+function getNextPatientId(patients) {
+  const ids = patients.map((p) => Number(p.id) || 0);
+  return ids.length ? Math.max(...ids) + 1 : 1;
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
@@ -52,11 +81,12 @@ app.get('/qr', async (req, res) => {
   const { text } = req.query;
   if (!text) return res.status(400).send('Missing text');
   try {
+    const png = await QRCode.toBuffer(String(text), { type: 'png', margin: 1, width: 240 });
     res.setHeader('Content-Type', 'image/png');
-    const stream = await QRCode.toFileStream(res, String(text), { margin: 1, width: 240 });
-    stream.on('error', () => res.end());
+    res.send(png);
   } catch (e) {
-    res.status(500).send('QR error');
+    // Avoid sending headers after write; just end
+    try { res.status(500).end(); } catch {}
   }
 });
 
@@ -126,6 +156,77 @@ app.get('/quick-upload', (req, res) => {
   </script>
 </body>
 </html>`);
+});
+
+// ---------------- Patients API ----------------
+
+// Get all patients
+app.get('/patients', (req, res) => {
+  const patients = readPatientsFromDisk();
+  res.json({ patients });
+});
+
+// Get single patient
+app.get('/patients/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const patients = readPatientsFromDisk();
+  const found = patients.find((p) => Number(p.id) === id);
+  if (!found) return res.status(404).json({ error: 'Not found' });
+  res.json(found);
+});
+
+// Create patient
+app.post('/patients', (req, res) => {
+  const body = req.body || {};
+  const patients = readPatientsFromDisk();
+  const id = getNextPatientId(patients);
+  const newPatient = {
+    id,
+    name: String(body.name || '').trim(),
+    age: Number(body.age) || 0,
+    gender: body.gender || 'Other',
+    phone: String(body.phone || ''),
+    email: String(body.email || ''),
+    medicare: String(body.medicare || ''),
+    lastVisit: body.lastVisit || 'New',
+    nextAppointment: body.nextAppointment || 'Not scheduled',
+    riskLevel: body.riskLevel || 'Low',
+    totalLesions: Number(body.totalLesions || 0),
+    newLesions: Number(body.newLesions || 0),
+    status: body.status || 'Active',
+    skinType: body.skinType || 'Unknown',
+    familyHistory: body.familyHistory || 'Unknown',
+    photos: Array.isArray(body.photos) ? body.photos : undefined,
+  };
+  patients.unshift(newPatient);
+  writePatientsToDisk(patients);
+  res.status(201).json(newPatient);
+});
+
+// Update/replace patient
+app.put('/patients/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const body = req.body || {};
+  const patients = readPatientsFromDisk();
+  const idx = patients.findIndex((p) => Number(p.id) === id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  const updated = { ...body, id };
+  patients[idx] = updated;
+  writePatientsToDisk(patients);
+  res.json(updated);
+});
+
+// Partial update
+app.patch('/patients/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const body = req.body || {};
+  const patients = readPatientsFromDisk();
+  const idx = patients.findIndex((p) => Number(p.id) === id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  const updated = { ...patients[idx], ...body, id };
+  patients[idx] = updated;
+  writePatientsToDisk(patients);
+  res.json(updated);
 });
 
 app.listen(PORT, () => {
