@@ -291,10 +291,10 @@ const DashboardLayout = () => {
   ];
 
   const recentPatients = [
-    { name: "Sarah Mitchell", age: "45", lastVisit: "Today 2:30 PM", status: "In Progress", risk: "High" },
-    { name: "James Wilson", age: "67", lastVisit: "Today 1:15 PM", status: "Completed", risk: "Medium" },
-    { name: "Emma Thompson", age: "32", lastVisit: "Today 11:45 AM", status: "Completed", risk: "Low" },
-    { name: "Robert Chen", age: "58", lastVisit: "Today 10:30 AM", status: "Follow-up", risk: "High" },
+    { name: "Sarah Mitchell", age: "45", lastVisit: "Today 2:30 PM", status: "In Progress" },
+    { name: "James Wilson", age: "67", lastVisit: "Today 1:15 PM", status: "Completed" },
+    { name: "Emma Thompson", age: "32", lastVisit: "Today 11:45 AM", status: "Completed" },
+    { name: "Robert Chen", age: "58", lastVisit: "Today 10:30 AM", status: "Follow-up" },
   ];
 
   const upcomingAppointments = [
@@ -431,12 +431,6 @@ const DashboardLayout = () => {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Badge 
-                              variant={patient.risk === 'High' ? 'destructive' : patient.risk === 'Medium' ? 'default' : 'secondary'}
-                              className="text-xs"
-                            >
-                              {patient.risk} Risk
-                            </Badge>
                             <Badge variant="outline" className="text-xs">
                               {patient.status}
                             </Badge>

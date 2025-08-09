@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import type { Patient } from "@/types/patient";
+import type { Patient, PhotoTag } from "@/types/patient";
 import { Input } from "@/components/ui/input";
 
 type ManagePatientPhotosDialogProps = {
@@ -22,9 +22,20 @@ export default function ManagePatientPhotosDialog({ patient, onSave, trigger }: 
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [serverOrigin, setServerOrigin] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [photoMeta, setPhotoMeta] = useState<Record<string, PhotoTag>>(patient.photoMeta ?? {});
+
+  const locationOptions = [
+    "Scalp", "Face", "Neck", "Chest", "Back", "Abdomen", "Arm", "Forearm", "Hand", "Thigh", "Leg", "Foot"
+  ];
+  const cancerTypeOptions = [
+    "BCC", "SCC", "Melanoma", "AK", "Nevus", "Other"
+  ];
 
   useEffect(() => {
-    if (open) setPhotos(patient.photos ?? []);
+    if (open) {
+      setPhotos(patient.photos ?? []);
+      setPhotoMeta(patient.photoMeta ?? {});
+    }
   }, [open, patient]);
 
   function handleFilesSelected(files: FileList | null) {
@@ -43,6 +54,7 @@ export default function ManagePatientPhotosDialog({ patient, onSave, trigger }: 
   async function handleSubmit() {
     try {
       setIsSaving(true);
+      // Persist photos array via parent; metadata can be saved on patient update later
       await Promise.resolve(onSave(photos));
       setOpen(false);
     } finally {
@@ -121,19 +133,36 @@ export default function ManagePatientPhotosDialog({ patient, onSave, trigger }: 
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {photos.map((src, idx) => (
-              <div key={idx} className="relative group border rounded overflow-hidden">
-                <img src={src} alt={`Photo ${idx + 1}`} className="w-full h-28 object-cover" />
-                <button
-                  type="button"
-                  className="absolute top-1 right-1 bg-white/90 text-sm px-2 py-0.5 rounded shadow opacity-0 group-hover:opacity-100"
-                  onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== idx))}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {photos.map((src, idx) => {
+              const key = src;
+              const tag = photoMeta[key] ?? {};
+              return (
+                <div key={idx} className="border rounded overflow-hidden">
+                  <img src={src} alt={`Photo ${idx + 1}`} className="w-full h-40 object-cover" />
+                  <div className="p-2 grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <div className="text-xs text-muted-foreground">Location</div>
+                      <select className="mt-1 w-full border rounded px-2 py-1" value={tag.location ?? ''} onChange={(e) => setPhotoMeta((prev) => ({ ...prev, [key]: { ...prev[key], location: e.target.value } }))}>
+                        <option value="">Select</option>
+                        {locationOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Cancer Type</div>
+                      <select className="mt-1 w-full border rounded px-2 py-1" value={tag.cancerType ?? ''} onChange={(e) => setPhotoMeta((prev) => ({ ...prev, [key]: { ...prev[key], cancerType: e.target.value } }))}>
+                        <option value="">Select</option>
+                        {cancerTypeOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center px-2 pb-2">
+                    <button type="button" className="text-xs text-red-700" onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== idx))}>Remove</button>
+                    {(tag.location || tag.cancerType) && <span className="text-xs text-muted-foreground">Tagged</span>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

@@ -12,6 +12,12 @@ type PatientFormData = {
   phone: string;
   email: string;
   medicare: string;
+  dateOfBirth?: string;
+  insuranceProvider?: string;
+  insuranceMemberNumber?: string;
+  residentialAddress?: string;
+  postalAddress?: string;
+  riskCategory?: string;
 };
 
 type NewPatientDialogProps = React.ComponentProps<typeof Button> & {
@@ -27,6 +33,12 @@ export default function NewPatientDialog({ children, onCreate, ...buttonProps }:
     phone: "",
     email: "",
     medicare: "",
+    dateOfBirth: "",
+    insuranceProvider: "",
+    insuranceMemberNumber: "",
+    residentialAddress: "",
+    postalAddress: "",
+    riskCategory: "",
   });
 
   function handleChange<K extends keyof PatientFormData>(key: K, value: PatientFormData[K]) {
@@ -44,9 +56,15 @@ export default function NewPatientDialog({ children, onCreate, ...buttonProps }:
       phone: form.phone.trim(),
       email: form.email.trim(),
       medicare: form.medicare.trim(),
+      dateOfBirth: form.dateOfBirth || undefined,
+      insuranceProvider: form.insuranceProvider?.trim(),
+      insuranceMemberNumber: form.insuranceMemberNumber?.trim(),
+      residentialAddress: form.residentialAddress?.trim(),
+      postalAddress: form.postalAddress?.trim(),
+      riskCategory: form.riskCategory?.trim(),
     });
     setOpen(false);
-    setForm({ name: "", age: "", gender: "", phone: "", email: "", medicare: "" });
+    setForm({ name: "", age: "", gender: "", phone: "", email: "", medicare: "", dateOfBirth: "", insuranceProvider: "", insuranceMemberNumber: "", residentialAddress: "", postalAddress: "", riskCategory: "" });
   }
 
   return (
@@ -68,6 +86,10 @@ export default function NewPatientDialog({ children, onCreate, ...buttonProps }:
             <div className="space-y-2">
               <Label htmlFor="age">Age</Label>
               <Input id="age" type="number" min={0} value={form.age} onChange={(e) => handleChange("age", e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+              <Input id="dateOfBirth" type="date" value={form.dateOfBirth} onChange={(e) => handleChange("dateOfBirth", e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Gender</Label>
@@ -93,6 +115,29 @@ export default function NewPatientDialog({ children, onCreate, ...buttonProps }:
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="medicare">Medicare</Label>
               <Input id="medicare" value={form.medicare} onChange={(e) => handleChange("medicare", e.target.value)} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="insuranceProvider">Private Health Insurance Provider</Label>
+              <Input id="insuranceProvider" value={form.insuranceProvider} onChange={(e) => handleChange("insuranceProvider", e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="insuranceMemberNumber">Insurance Member Number</Label>
+              <Input id="insuranceMemberNumber" value={form.insuranceMemberNumber} onChange={(e) => handleChange("insuranceMemberNumber", e.target.value)} />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="residentialAddress">Residential Address</Label>
+              <Input id="residentialAddress" value={form.residentialAddress} onChange={(e) => handleChange("residentialAddress", e.target.value)} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="postalAddress">Postal Address</Label>
+              <Input id="postalAddress" value={form.postalAddress} onChange={(e) => handleChange("postalAddress", e.target.value)} />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="riskCategory">Risk Category</Label>
+              <Input id="riskCategory" placeholder="e.g., High risk melanoma family history" value={form.riskCategory} onChange={(e) => handleChange("riskCategory", e.target.value)} />
             </div>
           </div>
           <DialogFooter>

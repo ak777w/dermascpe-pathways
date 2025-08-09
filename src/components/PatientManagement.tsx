@@ -21,11 +21,14 @@ import {
   Clock,
   Star,
   Edit,
-  Eye
+  Eye,
+  DollarSign
 } from "lucide-react";
 import type { Patient } from "@/types/patient";
 import EditPatientDialog from "@/components/EditPatientDialog";
 import ManagePatientPhotosDialog from "@/components/ManagePatientPhotosDialog";
+import PatientDetailDialog from "@/components/PatientDetailDialog";
+import PatientBillingDialog from "@/components/PatientBillingDialog";
 
 type PatientManagementProps = {
   patients: Patient[];
@@ -123,15 +126,6 @@ const PatientManagement = ({ patients, onCreatePatient }: PatientManagementProps
                       
                       <div className="flex items-center space-x-2">
                         <Badge 
-                          variant={
-                            patient.riskLevel === 'High' ? 'destructive' : 
-                            patient.riskLevel === 'Medium' ? 'default' : 'secondary'
-                          }
-                          className="text-xs"
-                        >
-                          {patient.riskLevel} Risk
-                        </Badge>
-                        <Badge 
                           variant={patient.status === 'Follow-up' ? 'default' : 'outline'}
                           className="text-xs"
                         >
@@ -154,9 +148,11 @@ const PatientManagement = ({ patients, onCreatePatient }: PatientManagementProps
                         <p className="font-medium">{patient.totalLesions}</p>
                       </div>
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        <PatientDetailDialog
+                          patient={patient}
+                          onSave={(p) => onUpdatePatient?.(p)}
+                          trigger={<Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button>}
+                        />
                         <EditPatientDialog
                           patient={patient}
                           onSave={(p) => onUpdatePatient?.(p)}
@@ -166,6 +162,11 @@ const PatientManagement = ({ patients, onCreatePatient }: PatientManagementProps
                           patient={patient}
                           onSave={(photos) => onUpdatePhotos?.(patient.id, photos)}
                           trigger={<Button variant="ghost" size="sm"><Camera className="w-4 h-4" /></Button>}
+                        />
+                        <PatientBillingDialog
+                          patient={patient}
+                          onSave={(p) => onUpdatePatient?.(p)}
+                          trigger={<Button variant="ghost" size="sm"><DollarSign className="w-4 h-4" /></Button>}
                         />
                       </div>
                     </div>
@@ -196,7 +197,7 @@ const PatientManagement = ({ patients, onCreatePatient }: PatientManagementProps
           </Card>
         </div>
 
-        {/* Patient Details & Activity */}
+        {/* Patient Details */}
         <div className="space-y-6">
           {/* Quick Stats */}
           <Card className="clinical-shadow">
@@ -234,39 +235,7 @@ const PatientManagement = ({ patients, onCreatePatient }: PatientManagementProps
             </CardContent>
           </Card>
 
-          {/* Recent Activity */}
-          <Card className="clinical-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-medical-primary" />
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-surface-secondary transition-colors">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      activity.type === 'imaging' ? 'bg-medical-primary/10' :
-                      activity.type === 'consultation' ? 'bg-clinical-success/10' :
-                      activity.type === 'appointment' ? 'bg-clinical-info/10' :
-                      'bg-clinical-warning/10'
-                    }`}>
-                      {activity.type === 'imaging' ? <Camera className="w-4 h-4 text-medical-primary" /> :
-                       activity.type === 'consultation' ? <FileText className="w-4 h-4 text-clinical-success" /> :
-                       activity.type === 'appointment' ? <Calendar className="w-4 h-4 text-clinical-info" /> :
-                       <AlertTriangle className="w-4 h-4 text-clinical-warning" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.patient}</p>
-                      <p className="text-xs text-muted-foreground">{activity.action}</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Removed Recent Activity block */}
         </div>
       </div>
     </div>
