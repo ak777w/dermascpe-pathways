@@ -25,15 +25,18 @@ export default function EditPatientDialog({ patient, onSave, trigger }: EditPati
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function doSave() {
     try {
       setIsSaving(true);
       await Promise.resolve(onSave({ ...form }));
-      setOpen(false);
     } finally {
       setIsSaving(false);
     }
+  }
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await doSave();
+    setOpen(false);
   }
 
   return (
@@ -84,9 +87,11 @@ export default function EditPatientDialog({ patient, onSave, trigger }: EditPati
             <DialogClose asChild>
               <Button type="button" variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
+            <DialogClose asChild>
+              <Button type="button" onClick={() => { void doSave(); }} disabled={isSaving} aria-busy={isSaving}>
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
+            </DialogClose>
           </DialogFooter>
         </form>
       </DialogContent>
