@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import NewPatientDialog from "@/components/NewPatientDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ImagingWorkflow from "@/components/ImagingWorkflow";
 import PatientManagement from "@/components/PatientManagement";
+import type { Patient } from "@/types/patient";
 import { 
   Calendar, 
   Users, 
@@ -25,6 +27,109 @@ import {
 
 const DashboardLayout = () => {
   const [activeView, setActiveView] = useState("dashboard");
+  const [patients, setPatients] = useState<Patient[]>([
+    {
+      id: 1,
+      name: "Sarah Mitchell",
+      age: 45,
+      gender: "Female",
+      phone: "+61 404 123 456",
+      email: "sarah.mitchell@email.com",
+      medicare: "2942 8573 4",
+      lastVisit: "Today",
+      nextAppointment: "3 weeks",
+      riskLevel: "High",
+      totalLesions: 8,
+      newLesions: 2,
+      status: "Active",
+      skinType: "Type II",
+      familyHistory: "Yes",
+    },
+    {
+      id: 2,
+      name: "James Wilson",
+      age: 67,
+      gender: "Male",
+      phone: "+61 404 789 012",
+      email: "james.wilson@email.com",
+      medicare: "2847 6391 7",
+      lastVisit: "Today",
+      nextAppointment: "6 months",
+      riskLevel: "Medium",
+      totalLesions: 12,
+      newLesions: 0,
+      status: "Active",
+      skinType: "Type III",
+      familyHistory: "No",
+    },
+    {
+      id: 3,
+      name: "Emma Thompson",
+      age: 32,
+      gender: "Female",
+      phone: "+61 404 345 678",
+      email: "emma.thompson@email.com",
+      medicare: "2749 5682 1",
+      lastVisit: "2 days ago",
+      nextAppointment: "12 months",
+      riskLevel: "Low",
+      totalLesions: 3,
+      newLesions: 1,
+      status: "Active",
+      skinType: "Type IV",
+      familyHistory: "No",
+    },
+    {
+      id: 4,
+      name: "Robert Chen",
+      age: 58,
+      gender: "Male",
+      phone: "+61 404 567 890",
+      email: "robert.chen@email.com",
+      medicare: "2658 7294 9",
+      lastVisit: "1 week ago",
+      nextAppointment: "Follow-up needed",
+      riskLevel: "High",
+      totalLesions: 15,
+      newLesions: 3,
+      status: "Follow-up",
+      skinType: "Type I",
+      familyHistory: "Yes",
+    },
+  ]);
+
+  const addPatient = (data: { name: string; age: number; gender: string; phone: string; email: string; medicare: string }) => {
+    setPatients((prev) => {
+      const nextId = prev.length ? Math.max(...prev.map((p) => p.id)) + 1 : 1;
+      const newPatient: Patient = {
+        id: nextId,
+        name: data.name,
+        age: data.age,
+        gender: data.gender,
+        phone: data.phone,
+        email: data.email,
+        medicare: data.medicare,
+        lastVisit: "New",
+        nextAppointment: "Not scheduled",
+        riskLevel: "Low",
+        totalLesions: 0,
+        newLesions: 0,
+        status: "Active",
+        skinType: "Unknown",
+        familyHistory: "Unknown",
+      };
+      return [newPatient, ...prev];
+    });
+    setActiveView("patients");
+  };
+
+  const updatePatient = (updated: Patient) => {
+    setPatients((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
+  };
+
+  const updatePhotos = (patientId: number, photos: string[]) => {
+    setPatients((prev) => prev.map((p) => (p.id === patientId ? { ...p, photos } : p)));
+  };
 
   const stats = [
     {
@@ -88,10 +193,10 @@ const DashboardLayout = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" className="gap-2">
+              <NewPatientDialog variant="outline" size="sm" className="gap-2" onCreate={addPatient}>
                 <Plus className="w-4 h-4" />
                 New Patient
-              </Button>
+              </NewPatientDialog>
               
               <Button variant="outline" size="sm" className="gap-2">
                 <Camera className="w-4 h-4" />
@@ -249,7 +354,12 @@ const DashboardLayout = () => {
 
             {/* Other tab contents would go here */}
             <TabsContent value="patients" className="mt-6">
-              <PatientManagement />
+              <PatientManagement
+                patients={patients}
+                onCreatePatient={addPatient}
+                onUpdatePatient={updatePatient}
+                onUpdatePhotos={updatePhotos}
+              />
             </TabsContent>
 
             <TabsContent value="appointments" className="mt-6">

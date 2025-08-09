@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import NewPatientDialog from "@/components/NewPatientDialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,81 +23,20 @@ import {
   Edit,
   Eye
 } from "lucide-react";
+import type { Patient } from "@/types/patient";
+import EditPatientDialog from "@/components/EditPatientDialog";
+import ManagePatientPhotosDialog from "@/components/ManagePatientPhotosDialog";
 
-const PatientManagement = () => {
+type PatientManagementProps = {
+  patients: Patient[];
+  onCreatePatient?: (data: { name: string; age: number; gender: string; phone: string; email: string; medicare: string }) => void;
+  onUpdatePatient?: (updated: Patient) => void;
+  onUpdatePhotos?: (patientId: number, photos: string[]) => void;
+};
+
+const PatientManagement = ({ patients, onCreatePatient }: PatientManagementProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<number | null>(null);
-
-  const patients = [
-    {
-      id: 1,
-      name: "Sarah Mitchell",
-      age: 45,
-      gender: "Female",
-      phone: "+61 404 123 456",
-      email: "sarah.mitchell@email.com",
-      medicare: "2942 8573 4",
-      lastVisit: "Today",
-      nextAppointment: "3 weeks",
-      riskLevel: "High",
-      totalLesions: 8,
-      newLesions: 2,
-      status: "Active",
-      skinType: "Type II",
-      familyHistory: "Yes"
-    },
-    {
-      id: 2,
-      name: "James Wilson",
-      age: 67,
-      gender: "Male", 
-      phone: "+61 404 789 012",
-      email: "james.wilson@email.com",
-      medicare: "2847 6391 7",
-      lastVisit: "Today",
-      nextAppointment: "6 months",
-      riskLevel: "Medium",
-      totalLesions: 12,
-      newLesions: 0,
-      status: "Active",
-      skinType: "Type III",
-      familyHistory: "No"
-    },
-    {
-      id: 3,
-      name: "Emma Thompson",
-      age: 32,
-      gender: "Female",
-      phone: "+61 404 345 678",
-      email: "emma.thompson@email.com", 
-      medicare: "2749 5682 1",
-      lastVisit: "2 days ago",
-      nextAppointment: "12 months",
-      riskLevel: "Low",
-      totalLesions: 3,
-      newLesions: 1,
-      status: "Active",
-      skinType: "Type IV",
-      familyHistory: "No"
-    },
-    {
-      id: 4,
-      name: "Robert Chen",
-      age: 58,
-      gender: "Male",
-      phone: "+61 404 567 890",
-      email: "robert.chen@email.com",
-      medicare: "2658 7294 9",
-      lastVisit: "1 week ago",
-      nextAppointment: "Follow-up needed",
-      riskLevel: "High",
-      totalLesions: 15,
-      newLesions: 3,
-      status: "Follow-up",
-      skinType: "Type I",
-      familyHistory: "Yes"
-    }
-  ];
 
   const recentActivity = [
     { patient: "Sarah Mitchell", action: "Images captured", time: "15 min ago", type: "imaging" },
@@ -105,10 +45,12 @@ const PatientManagement = () => {
     { patient: "Robert Chen", action: "Biopsy results received", time: "3 hours ago", type: "results" }
   ];
 
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.medicare.includes(searchTerm)
-  );
+  const filteredPatients = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return patients.filter(
+      (patient) => patient.name.toLowerCase().includes(term) || patient.medicare.includes(searchTerm)
+    );
+  }, [patients, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -118,10 +60,11 @@ const PatientManagement = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-foreground">Patient Management</h2>
             <div className="flex items-center space-x-2">
-              <Button className="gap-2">
+              <NewPatientDialog className="gap-2" onCreate={onCreatePatient}
+              >
                 <Plus className="w-4 h-4" />
                 New Patient
-              </Button>
+              </NewPatientDialog>
               <Button variant="outline" className="gap-2">
                 <Filter className="w-4 h-4" />
                 Filter
@@ -214,12 +157,16 @@ const PatientManagement = () => {
                         <Button variant="ghost" size="sm">
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Camera className="w-4 h-4" />
-                        </Button>
+                        <EditPatientDialog
+                          patient={patient}
+                          onSave={(p) => onUpdatePatient?.(p)}
+                          trigger={<Button variant="ghost" size="sm"><Edit className="w-4 h-4" /></Button>}
+                        />
+                        <ManagePatientPhotosDialog
+                          patient={patient}
+                          onSave={(photos) => onUpdatePhotos?.(patient.id, photos)}
+                          trigger={<Button variant="ghost" size="sm"><Camera className="w-4 h-4" /></Button>}
+                        />
                       </div>
                     </div>
                     
@@ -228,6 +175,17 @@ const PatientManagement = () => {
                         <div className="flex items-center gap-2 text-sm text-clinical-warning">
                           <AlertTriangle className="w-4 h-4" />
                           {patient.newLesions} new lesion{patient.newLesions > 1 ? 's' : ''} documented
+                        </div>
+                      </div>
+                    )}
+
+                    {Array.isArray(patient.photos) && patient.photos.length > 0 && (
+                      <div className="mt-3">
+                        <div className="text-xs text-muted-foreground mb-2">Photos ({patient.photos.length})</div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {patient.photos.slice(0, 6).map((src, idx) => (
+                            <img key={idx} src={src} alt="patient photo" className="w-full h-16 object-cover rounded border" />
+                          ))}
                         </div>
                       </div>
                     )}
