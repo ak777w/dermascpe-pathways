@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ImagingWorkflow from "@/components/ImagingWorkflow";
 import PatientManagement from "@/components/PatientManagement";
 import type { Patient } from "@/types/patient";
+import Billing from "@/components/Billing";
 import { 
   Calendar, 
   Users, 
@@ -25,8 +26,14 @@ import {
   MapPin
 } from "lucide-react";
 
-const DashboardLayout = () => {
-  const [activeView, setActiveView] = useState("dashboard");
+type DashboardView = "dashboard" | "patients" | "appointments" | "imaging" | "billing";
+
+interface DashboardLayoutProps {
+  initialView?: DashboardView;
+}
+
+const DashboardLayout = ({ initialView = "dashboard" }: DashboardLayoutProps) => {
+  const [activeView, setActiveView] = useState<DashboardView>(initialView);
   const [patients, setPatients] = useState<Patient[]>([
     {
       id: 1,
@@ -351,7 +358,7 @@ const DashboardLayout = () => {
       {/* Navigation Tabs */}
       <div className="border-b bg-surface-secondary">
         <div className="container mx-auto px-6">
-          <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
+          <Tabs value={activeView} onValueChange={(v) => setActiveView(v as DashboardView)} className="w-full">
             <TabsList className="h-12 bg-transparent border-none p-0">
               <TabsTrigger 
                 value="dashboard" 
@@ -380,6 +387,13 @@ const DashboardLayout = () => {
               >
                 <Camera className="w-4 h-4 mr-2" />
                 Imaging
+              </TabsTrigger>
+              <TabsTrigger 
+                value="billing"
+                className="px-6 py-3 data-[state=active]:bg-surface-primary data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-medical-primary"
+              >
+                <DollarSign className="w-4 h-4 mr-2" />
+                Billing
               </TabsTrigger>
             </TabsList>
 
@@ -496,6 +510,9 @@ const DashboardLayout = () => {
 
             <TabsContent value="imaging" className="mt-6">
               <ImagingWorkflow />
+            </TabsContent>
+            <TabsContent value="billing" className="mt-6">
+              <Billing />
             </TabsContent>
           </Tabs>
         </div>
