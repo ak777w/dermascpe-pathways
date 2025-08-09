@@ -137,3 +137,80 @@
     box-shadow: var(--shadow-elevated);
   }
 }
+
+/* Calendar fine-tuning */
+/* Remove extra minor lines if present and compact header spacing */
+.rbc-time-view .rbc-time-content > .rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: 1px solid var(--border);
+}
+.rbc-header {
+  padding: 2px 0; /* thinner header */
+  border-bottom: 2px solid #b0c4de; /* thicker divide between header and grid */
+  background-color: hsl(var(--surface-secondary));
+}
+.rbc-time-view .rbc-time-header { border-bottom: 1px solid #d6e2f0 !important; }
+.rbc-time-header-content { border-bottom: 0 !important; }
+.rbc-time-view .rbc-time-content { border-top: 0 !important; }
+.rbc-time-header-content { border-top: 0 !important; }
+.rbc-time-content > .rbc-time-gutter { border-top: 0 !important; }
+.rbc-time-gutter .rbc-timeslot-group:first-child { border-top: 0 !important; }
+.rbc-day-slot .rbc-timeslot-group:first-child { border-top: 0 !important; }
+.rbc-time-header-gutter { border-bottom: 0 !important; }
+.rbc-time-header.rbc-overflowing { border-right: 0 !important; }
+/* Remove the all-day strip entirely to eliminate empty whitespace */
+.rbc-allday-cell,
+.rbc-allday-events {
+  display: none !important;
+  height: 0 !important;
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.rbc-time-header .rbc-row {
+  min-height: 0 !important;
+}
+
+/* Smaller left gutter times */
+.rbc-time-gutter { font-size: 11px; }
+.rbc-time-gutter .rbc-label { font-size: 11px; line-height: 1.1; padding-right: 6px; }
+.rbc-time-gutter, .rbc-time-header, .rbc-time-content, .rbc-day-slot .rbc-timeslot-group { border-color: #d6e2f0 !important; }
+/* Shade the day columns and left gutter lightly */
+.rbc-time-view .rbc-time-gutter { background-color: hsl(var(--surface-secondary)); }
+.rbc-time-view .rbc-day-slot { background-image: none; }
+.rbc-day-slot .rbc-timeslot-group:nth-child(odd) { background-color: rgba(33,150,243,0.025); }
+.rbc-day-slot .rbc-timeslot-group:nth-child(even) { background-color: transparent; }
+.rbc-time-view .rbc-time-gutter .rbc-timeslot-group { background-color: hsl(var(--surface-secondary)); }
+.rbc-event { margin: 2px 6px; border-radius: 10px; }
+.rbc-event {
+  box-sizing: border-box;
+  margin: 2px 6px; /* visually centered within column for week/day */
+  border-radius: 10px;
+}
+/* Prevent overflow in month cells */
+.rbc-month-view .rbc-event {
+  margin: 2px;            /* tighter margin inside day cell */
+  max-width: calc(100% - 4px);
+}
+
+/* Toolbar sizing and spacing */
+.rbc-toolbar {
+  padding: 4px 8px;
+  margin: 6px 8px 0;
+  gap: 6px;
+}
+.rbc-toolbar .rbc-btn-group > button {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+.rbc-toolbar .rbc-btn-group > button + button {
+  margin-left: 4px;
+}
+.rbc-toolbar .rbc-toolbar-label {
+  font-weight: 600;
+}
+
+/* Prettier file input */
+.file-input {
+  @apply text-xs rounded-md px-3 py-1.5 border bg-surface-secondary hover:bg-surface-tertiary transition;
+}
