@@ -1,0 +1,32 @@
+[
+  {
+    "a": "ibuprofen",
+    "b": "paracetamol",
+    "severity": "low",
+    "summary": "Generally safe together at OTC doses; monitor total analgesic use."
+  },
+  {
+    "a": "ibuprofen",
+    "b": "cephalexin",
+    "severity": "low",
+    "summary": "No significant interaction expected."
+  },
+  {
+    "a": "doxycycline",
+    "b": "amoxicillin_clavulanate",
+    "severity": "moderate",
+    "summary": "Tetracyclines may reduce bactericidal action of beta‑lactams; avoid combination when possible."
+  },
+  {
+    "a": "doxycycline",
+    "b": "ibuprofen",
+    "severity": "low",
+    "summary": "No significant interaction expected."
+  },
+  {
+    "a": "aciclovir",
+    "b": "ibuprofen",
+    "severity": "low",
+    "summary": "No significant interaction expected in healthy adults."
+  }
+]

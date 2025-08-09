@@ -26,6 +26,8 @@ const store = Object.create(null);
 const DATA_DIR = __dirname;
 const PATIENTS_FILE = path.join(DATA_DIR, 'patients.json');
 const APPTS_FILE = path.join(DATA_DIR, 'appointments.json');
+const FORMULARY_FILE = path.join(DATA_DIR, 'formulary.json');
+const INTERACTIONS_FILE = path.join(DATA_DIR, 'interactions.json');
 
 function readPatientsFromDisk() {
   try {
@@ -67,6 +69,24 @@ function nextApptId(appts) {
   return ids.length ? Math.max(...ids) + 1 : 1;
 }
 
+// --- Formulary & interactions helpers ---
+function readFormulary() {
+  try {
+    const raw = fs.readFileSync(FORMULARY_FILE, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+function readInteractions() {
+  try {
+    const raw = fs.readFileSync(INTERACTIONS_FILE, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => {
@@ -106,6 +126,37 @@ app.get('/qr', async (req, res) => {
     // Avoid sending headers after write; just end
     try { res.status(500).end(); } catch {}
   }
+});
+
+// ---------------- Formulary & Interactions API ----------------
+// Search formulary by name substring
+app.get('/formulary', (req, res) => {
+  const q = String(req.query.q || '').trim().toLowerCase();
+  const data = readFormulary();
+  const results = q ? data.filter((d) => d.name.toLowerCase().includes(q) || d.id.includes(q)) : data;
+  res.json({ drugs: results.slice(0, 50) });
+});
+
+// Basic interaction check for a set of drug ids
+app.post('/interactions/check', (req, res) => {
+  const drugIds = Array.isArray(req.body?.drugIds) ? req.body.drugIds.map(String) : [];
+  if (drugIds.length < 2) return res.json({ interactions: [] });
+  const pairs = new Set();
+  for (let i = 0; i < drugIds.length; i++) {
+    for (let j = i + 1; j < drugIds.length; j++) {
+      const a = drugIds[i];
+      const b = drugIds[j];
+      pairs.add([a, b].sort().join('::'));
+    }
+  }
+  const db = readInteractions();
+  const out = [];
+  for (const key of pairs) {
+    const [a, b] = key.split('::');
+    const hit = db.find((x) => (x.a === a && x.b === b) || (x.a === b && x.b === a));
+    if (hit) out.push({ a, b, severity: hit.severity, summary: hit.summary });
+  }
+  res.json({ interactions: out });
 });
 
 app.get('/photos', (req, res) => {

@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Patient, PatientNote, PathologyReport } from "@/types/patient";
+import type { Patient, PatientNote, PathologyReport, Prescription } from "@/types/patient";
 import { Textarea } from "@/components/ui/textarea";
+import PrescriptionComposer from "./PrescriptionComposer";
 
 type Props = {
   patient: Patient;
@@ -16,6 +17,7 @@ export default function PatientDetailDialog({ patient, trigger, onSave }: Props)
   const [working, setWorking] = useState(false);
   const [notes, setNotes] = useState<PatientNote[]>(patient.notes ?? []);
   const [reports, setReports] = useState<PathologyReport[]>(patient.pathologyReports ?? []);
+  const [prescription, setPrescription] = useState<Prescription | null>(null);
   const images = useMemo(() => patient.photos ?? [], [patient.photos]);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function PatientDetailDialog({ patient, trigger, onSave }: Props)
   async function saveAll() {
     try {
       setWorking(true);
-      await Promise.resolve(onSave?.({ ...patient, notes, pathologyReports: reports }));
+      await Promise.resolve(onSave?.({ ...patient, notes, pathologyReports: reports, prescriptions: prescription ? [prescription, ...(patient.prescriptions ?? [])] : patient.prescriptions }));
       setOpen(false);
     } finally {
       setWorking(false);
@@ -77,6 +79,7 @@ export default function PatientDetailDialog({ patient, trigger, onSave }: Props)
             <TabsTrigger value="notes">Notes</TabsTrigger>
             <TabsTrigger value="pathology">Pathology</TabsTrigger>
             <TabsTrigger value="images">Images</TabsTrigger>
+            <TabsTrigger value="script">Script</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
@@ -111,6 +114,11 @@ export default function PatientDetailDialog({ patient, trigger, onSave }: Props)
             </div>
           </TabsContent>
 
+          <TabsContent value="script" className="mt-4 space-y-3">
+            <div className="text-sm text-muted-foreground">Compose an electronic prescription and check interactions.</div>
+            <PrescriptionComposer value={prescription} onChange={setPrescription} />
+          </TabsContent>
+
           <TabsContent value="images" className="mt-4">
             {images.length === 0 ? (
               <div className="text-sm text-muted-foreground">No images.</div>
@@ -124,9 +132,9 @@ export default function PatientDetailDialog({ patient, trigger, onSave }: Props)
           </TabsContent>
 
           <TabsContent value="history" className="mt-4 space-y-2">
-            <div className="text-sm text-muted-foreground">Timeline of notes and report entries.</div>
+            <div className="text-sm text-muted-foreground">Timeline of notes, prescriptions, and report entries.</div>
             <div className="space-y-2 max-h-[60vh] overflow-auto pr-1">
-              {[...reports.map((r) => ({ t: r.date, type: 'Report', title: r.title })), ...notes.map((n) => ({ t: n.createdAt, type: 'Note', title: n.text.slice(0,60) }))]
+              {[...reports.map((r) => ({ t: r.date, type: 'Report', title: r.title })), ...notes.map((n) => ({ t: n.createdAt, type: 'Note', title: n.text.slice(0,60) })), ...(patient.prescriptions ?? []).map((p) => ({ t: p.createdAt, type: 'Prescription', title: `${p.items.length} item(s)` }))]
                 .sort((a, b) => (a.t < b.t ? 1 : -1))
                 .map((e, idx) => (
                   <div key={idx} className="text-sm border rounded px-3 py-2 flex items-center justify-between">

@@ -1,0 +1,96 @@
+[
+  {
+    "id": "paracetamol",
+    "name": "Paracetamol",
+    "forms": [
+      { "form": "tablet", "strengths": ["500 mg"] },
+      { "form": "suspension", "strengths": ["120 mg/5 mL", "250 mg/5 mL"] }
+    ],
+    "standardRegimens": [
+      {
+        "dose": "500 mg",
+        "route": "PO",
+        "frequency": "q6h PRN",
+        "maxDailyDose": "4 g",
+        "indications": ["Pain", "Fever"]
+      }
+    ]
+  },
+  {
+    "id": "ibuprofen",
+    "name": "Ibuprofen",
+    "forms": [
+      { "form": "tablet", "strengths": ["200 mg", "400 mg"] }
+    ],
+    "standardRegimens": [
+      {
+        "dose": "200–400 mg",
+        "route": "PO",
+        "frequency": "q8h PRN",
+        "maxDailyDose": "1.2 g OTC"
+      }
+    ]
+  },
+  {
+    "id": "doxycycline",
+    "name": "Doxycycline",
+    "forms": [
+      { "form": "capsule", "strengths": ["100 mg"] }
+    ],
+    "standardRegimens": [
+      {
+        "dose": "100 mg",
+        "route": "PO",
+        "frequency": "BD day 1, then OD",
+        "duration": "7–10 days",
+        "indications": ["Skin/soft tissue infection", "Acne"]
+      }
+    ]
+  },
+  {
+    "id": "amoxicillin_clavulanate",
+    "name": "Amoxicillin + Clavulanate",
+    "forms": [
+      { "form": "tablet", "strengths": ["875/125 mg"] }
+    ],
+    "standardRegimens": [
+      {
+        "dose": "875/125 mg",
+        "route": "PO",
+        "frequency": "BD",
+        "duration": "5–7 days"
+      }
+    ]
+  },
+  {
+    "id": "cephalexin",
+    "name": "Cephalexin",
+    "forms": [
+      { "form": "capsule", "strengths": ["500 mg"] }
+    ],
+    "standardRegimens": [
+      {
+        "dose": "500 mg",
+        "route": "PO",
+        "frequency": "QID",
+        "duration": "5–7 days"
+      }
+    ]
+  },
+  {
+    "id": "aciclovir",
+    "name": "Aciclovir",
+    "forms": [
+      { "form": "tablet", "strengths": ["400 mg", "800 mg"] }
+    ],
+    "standardRegimens": [
+      {
+        "dose": "400 mg",
+        "route": "PO",
+        "frequency": "TDS",
+        "duration": "5 days",
+        "indications": ["HSV"]
+      }
+    ]
+  }
+]
