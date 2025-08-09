@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import NewPatientDialog from "@/components/NewPatientDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ImagingWorkflow from "@/components/ImagingWorkflow";
-import PatientManagement from "@/components/PatientManagement";
 import AppointmentsCalendar from "@/components/AppointmentsCalendar";
+import PatientManagement from "@/components/PatientManagement";
+import type { Patient } from "@/types/patient";
+import Billing from "@/components/Billing";
 import { 
   Calendar, 
   Users, 
@@ -24,8 +27,245 @@ import {
   MapPin
 } from "lucide-react";
 
-const DashboardLayout = () => {
-  const [activeView, setActiveView] = useState("dashboard");
+type DashboardView = "dashboard" | "patients" | "appointments" | "imaging" | "billing";
+
+interface DashboardLayoutProps {
+  initialView?: DashboardView;
+}
+
+const DashboardLayout = ({ initialView = "dashboard" }: DashboardLayoutProps) => {
+  const [activeView, setActiveView] = useState<DashboardView>(initialView);
+  const [patients, setPatients] = useState<Patient[]>([
+    {
+      id: 1,
+      name: "Sarah Mitchell",
+      age: 45,
+      gender: "Female",
+      phone: "+61 404 123 456",
+      email: "sarah.mitchell@email.com",
+      medicare: "2942 8573 4",
+      lastVisit: "Today",
+      nextAppointment: "3 weeks",
+      riskLevel: "High",
+      totalLesions: 8,
+      newLesions: 2,
+      status: "Active",
+      skinType: "Type II",
+      familyHistory: "Yes",
+    },
+    {
+      id: 2,
+      name: "James Wilson",
+      age: 67,
+      gender: "Male",
+      phone: "+61 404 789 012",
+      email: "james.wilson@email.com",
+      medicare: "2847 6391 7",
+      lastVisit: "Today",
+      nextAppointment: "6 months",
+      riskLevel: "Medium",
+      totalLesions: 12,
+      newLesions: 0,
+      status: "Active",
+      skinType: "Type III",
+      familyHistory: "No",
+    },
+    {
+      id: 3,
+      name: "Emma Thompson",
+      age: 32,
+      gender: "Female",
+      phone: "+61 404 345 678",
+      email: "emma.thompson@email.com",
+      medicare: "2749 5682 1",
+      lastVisit: "2 days ago",
+      nextAppointment: "12 months",
+      riskLevel: "Low",
+      totalLesions: 3,
+      newLesions: 1,
+      status: "Active",
+      skinType: "Type IV",
+      familyHistory: "No",
+    },
+    {
+      id: 4,
+      name: "Robert Chen",
+      age: 58,
+      gender: "Male",
+      phone: "+61 404 567 890",
+      email: "robert.chen@email.com",
+      medicare: "2658 7294 9",
+      lastVisit: "1 week ago",
+      nextAppointment: "Follow-up needed",
+      riskLevel: "High",
+      totalLesions: 15,
+      newLesions: 3,
+      status: "Follow-up",
+      skinType: "Type I",
+      familyHistory: "Yes",
+    },
+  ]);
+
+  const API_BASE = "/api";
+
+  // Load patients from server on mount (falls back to seeded list on error)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/patients`);
+        if (!res.ok) return; // keep local seed
+        const json = await res.json();
+        if (Array.isArray(json.patients)) {
+          setPatients(json.patients);
+        }
+      } catch {
+        // ignore and keep seed
+      }
+    })();
+  }, []);
+
+  const addPatient = async (data: { name: string; age: number; gender: string; phone: string; email: string; medicare: string }) => {
+    try {
+      const res = await fetch(`${API_BASE}/patients`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.name,
+          age: data.age,
+          gender: data.gender,
+          phone: data.phone,
+          email: data.email,
+          medicare: data.medicare,
+          lastVisit: "New",
+          nextAppointment: "Not scheduled",
+          riskLevel: "Low",
+          totalLesions: 0,
+          newLesions: 0,
+          status: "Active",
+          skinType: "Unknown",
+          familyHistory: "Unknown",
+        }),
+      });
+      if (res.ok) {
+        const created: Patient = await res.json();
+        setPatients((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
+      } else {
+        // fallback to local add
+        setPatients((prev) => {
+          const nextId = prev.length ? Math.max(...prev.map((p) => p.id)) + 1 : 1;
+          const newPatient: Patient = {
+            id: nextId,
+            name: data.name,
+            age: data.age,
+            gender: data.gender,
+            phone: data.phone,
+            email: data.email,
+            medicare: data.medicare,
+            lastVisit: "New",
+            nextAppointment: "Not scheduled",
+            riskLevel: "Low",
+            totalLesions: 0,
+            newLesions: 0,
+            status: "Active",
+            skinType: "Unknown",
+            familyHistory: "Unknown",
+          };
+          return [newPatient, ...prev];
+        });
+      }
+    } catch {
+      // offline fallback
+      setPatients((prev) => {
+        const nextId = prev.length ? Math.max(...prev.map((p) => p.id)) + 1 : 1;
+        const newPatient: Patient = {
+          id: nextId,
+          name: data.name,
+          age: data.age,
+          gender: data.gender,
+          phone: data.phone,
+          email: data.email,
+          medicare: data.medicare,
+          lastVisit: "New",
+          nextAppointment: "Not scheduled",
+          riskLevel: "Low",
+          totalLesions: 0,
+          newLesions: 0,
+          status: "Active",
+          skinType: "Unknown",
+          familyHistory: "Unknown",
+        };
+        return [newPatient, ...prev];
+      });
+    }
+    setActiveView("patients");
+  };
+
+  const updatePatient = async (updated: Patient) => {
+    try {
+      const res = await fetch(`${API_BASE}/patients/${encodeURIComponent(String(updated.id))}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+      if (res.ok) {
+        const saved: Patient = await res.json();
+        setPatients((prev) => prev.map((p) => (p.id === saved.id ? { ...p, ...saved } : p)));
+        return;
+      }
+      if (res.status === 404) {
+        // If patient not found on server, create it
+        const createRes = await fetch(`${API_BASE}/patients`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated),
+        });
+        if (createRes.ok) {
+          const created: Patient = await createRes.json();
+          setPatients((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    // fallback local update
+    setPatients((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
+  };
+
+  const updatePhotos = async (patientId: number, photos: string[]) => {
+    try {
+      const res = await fetch(`${API_BASE}/patients/${encodeURIComponent(String(patientId))}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos }),
+      });
+      if (res.ok) {
+        const saved: Patient = await res.json();
+        setPatients((prev) => prev.map((p) => (p.id === saved.id ? { ...p, ...saved } : p)));
+        return;
+      }
+      if (res.status === 404) {
+        // If patient not found, create from current local copy with photos
+        const local = patients.find((p) => p.id === patientId);
+        if (local) {
+          const createRes = await fetch(`${API_BASE}/patients`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...local, photos }),
+          });
+          if (createRes.ok) {
+            const created: Patient = await createRes.json();
+            setPatients((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
+            return;
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+    // fallback local update
+    setPatients((prev) => prev.map((p) => (p.id === patientId ? { ...p, photos } : p)));
+  };
 
   const stats = [
     {
@@ -59,10 +299,10 @@ const DashboardLayout = () => {
   ];
 
   const recentPatients = [
-    { name: "Sarah Mitchell", age: "45", lastVisit: "Today 2:30 PM", status: "In Progress", risk: "High" },
-    { name: "James Wilson", age: "67", lastVisit: "Today 1:15 PM", status: "Completed", risk: "Medium" },
-    { name: "Emma Thompson", age: "32", lastVisit: "Today 11:45 AM", status: "Completed", risk: "Low" },
-    { name: "Robert Chen", age: "58", lastVisit: "Today 10:30 AM", status: "Follow-up", risk: "High" },
+    { name: "Sarah Mitchell", age: "45", lastVisit: "Today 2:30 PM", status: "In Progress" },
+    { name: "James Wilson", age: "67", lastVisit: "Today 1:15 PM", status: "Completed" },
+    { name: "Emma Thompson", age: "32", lastVisit: "Today 11:45 AM", status: "Completed" },
+    { name: "Robert Chen", age: "58", lastVisit: "Today 10:30 AM", status: "Follow-up" },
   ];
 
   const upcomingAppointments = [
@@ -89,10 +329,10 @@ const DashboardLayout = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" className="gap-2">
+              <NewPatientDialog variant="outline" size="sm" className="gap-2" onCreate={addPatient}>
                 <Plus className="w-4 h-4" />
                 New Patient
-              </Button>
+              </NewPatientDialog>
               
               <Button variant="outline" size="sm" className="gap-2">
                 <Camera className="w-4 h-4" />
@@ -119,7 +359,7 @@ const DashboardLayout = () => {
       {/* Navigation Tabs */}
       <div className="border-b bg-surface-secondary">
         <div className="container mx-auto px-6">
-          <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
+          <Tabs value={activeView} onValueChange={(v) => setActiveView(v as DashboardView)} className="w-full">
             <TabsList className="h-12 bg-transparent border-none p-0">
               <TabsTrigger 
                 value="dashboard" 
@@ -148,6 +388,13 @@ const DashboardLayout = () => {
               >
                 <Camera className="w-4 h-4 mr-2" />
                 Imaging
+              </TabsTrigger>
+              <TabsTrigger 
+                value="billing"
+                className="px-6 py-3 data-[state=active]:bg-surface-primary data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-medical-primary"
+              >
+                <DollarSign className="w-4 h-4 mr-2" />
+                Billing
               </TabsTrigger>
             </TabsList>
 
@@ -199,12 +446,6 @@ const DashboardLayout = () => {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Badge 
-                              variant={patient.risk === 'High' ? 'destructive' : patient.risk === 'Medium' ? 'default' : 'secondary'}
-                              className="text-xs"
-                            >
-                              {patient.risk} Risk
-                            </Badge>
                             <Badge variant="outline" className="text-xs">
                               {patient.status}
                             </Badge>
@@ -250,7 +491,12 @@ const DashboardLayout = () => {
 
             {/* Other tab contents would go here */}
             <TabsContent value="patients" className="mt-6">
-              <PatientManagement />
+              <PatientManagement
+                patients={patients}
+                onCreatePatient={addPatient}
+                onUpdatePatient={updatePatient}
+                onUpdatePhotos={updatePhotos}
+              />
             </TabsContent>
 
             <TabsContent value="appointments" className="mt-6">
@@ -259,6 +505,9 @@ const DashboardLayout = () => {
 
             <TabsContent value="imaging" className="mt-6">
               <ImagingWorkflow />
+            </TabsContent>
+            <TabsContent value="billing" className="mt-6">
+              <Billing />
             </TabsContent>
           </Tabs>
         </div>

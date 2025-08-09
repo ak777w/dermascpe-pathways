@@ -1,0 +1,155 @@
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type PatientFormData = {
+  name: string;
+  age: string;
+  gender: "Male" | "Female" | "Other" | "";
+  phone: string;
+  email: string;
+  medicare: string;
+  dateOfBirth?: string;
+  insuranceProvider?: string;
+  insuranceMemberNumber?: string;
+  residentialAddress?: string;
+  postalAddress?: string;
+  riskCategory?: string;
+};
+
+type NewPatientDialogProps = React.ComponentProps<typeof Button> & {
+  onCreate?: (data: Omit<PatientFormData, "age"> & { age: number }) => void;
+};
+
+export default function NewPatientDialog({ children, onCreate, ...buttonProps }: NewPatientDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<PatientFormData>({
+    name: "",
+    age: "",
+    gender: "",
+    phone: "",
+    email: "",
+    medicare: "",
+    dateOfBirth: "",
+    insuranceProvider: "",
+    insuranceMemberNumber: "",
+    residentialAddress: "",
+    postalAddress: "",
+    riskCategory: "",
+  });
+
+  function handleChange<K extends keyof PatientFormData>(key: K, value: PatientFormData[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const ageNum = Number(form.age);
+    if (Number.isNaN(ageNum)) return;
+    onCreate?.({
+      name: form.name.trim(),
+      age: ageNum,
+      gender: form.gender || "Other",
+      phone: form.phone.trim(),
+      email: form.email.trim(),
+      medicare: form.medicare.trim(),
+      dateOfBirth: form.dateOfBirth || undefined,
+      insuranceProvider: form.insuranceProvider?.trim(),
+      insuranceMemberNumber: form.insuranceMemberNumber?.trim(),
+      residentialAddress: form.residentialAddress?.trim(),
+      postalAddress: form.postalAddress?.trim(),
+      riskCategory: form.riskCategory?.trim(),
+    });
+    setOpen(false);
+    setForm({ name: "", age: "", gender: "", phone: "", email: "", medicare: "", dateOfBirth: "", insuranceProvider: "", insuranceMemberNumber: "", residentialAddress: "", postalAddress: "", riskCategory: "" });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button {...buttonProps}>{children ?? "New Patient"}</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New Patient</DialogTitle>
+          <DialogDescription>Enter the patient's details and click Create.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input id="name" value={form.name} onChange={(e) => handleChange("name", e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="age">Age</Label>
+              <Input id="age" type="number" min={0} value={form.age} onChange={(e) => handleChange("age", e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+              <Input id="dateOfBirth" type="date" value={form.dateOfBirth} onChange={(e) => handleChange("dateOfBirth", e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Gender</Label>
+              <Select value={form.gender} onValueChange={(v) => handleChange("gender", v as PatientFormData["gender"]) }>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input id="phone" value={form.phone} onChange={(e) => handleChange("phone", e.target.value)} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={form.email} onChange={(e) => handleChange("email", e.target.value)} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="medicare">Medicare</Label>
+              <Input id="medicare" value={form.medicare} onChange={(e) => handleChange("medicare", e.target.value)} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="insuranceProvider">Private Health Insurance Provider</Label>
+              <Input id="insuranceProvider" value={form.insuranceProvider} onChange={(e) => handleChange("insuranceProvider", e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="insuranceMemberNumber">Insurance Member Number</Label>
+              <Input id="insuranceMemberNumber" value={form.insuranceMemberNumber} onChange={(e) => handleChange("insuranceMemberNumber", e.target.value)} />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="residentialAddress">Residential Address</Label>
+              <Input id="residentialAddress" value={form.residentialAddress} onChange={(e) => handleChange("residentialAddress", e.target.value)} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="postalAddress">Postal Address</Label>
+              <Input id="postalAddress" value={form.postalAddress} onChange={(e) => handleChange("postalAddress", e.target.value)} />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="riskCategory">Risk Category</Label>
+              <Input id="riskCategory" placeholder="e.g., High risk melanoma family history" value={form.riskCategory} onChange={(e) => handleChange("riskCategory", e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button type="submit">Create</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+

@@ -11,7 +11,7 @@ import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { format, parse, startOfWeek, getDay, addDays, addWeeks, addMonths } from "date-fns";
-import enAU from "date-fns/locale/en-AU";
+import { enAU } from "date-fns/locale/en-AU";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 import { Button } from "@/components/ui/button";
@@ -211,7 +211,7 @@ export default function AppointmentsCalendar() {
     setDialogOpen(false);
     setEditingEventId(null);
     setPatientName("");
-    setNotes("");
+    setReceptionNotes("");
   }
 
   function handleDurationChange(minsString: string) {
@@ -387,16 +387,6 @@ export default function AppointmentsCalendar() {
     if (!notesEventId) return;
     setEvents((prev) => prev.map((e) => (e.id === notesEventId ? { ...e, clinicalNotes: notesText } : e)));
     setNotesDialogOpen(false);
-  }
-
-  function handleUploadFiles(files: FileList | null) {
-    if (!files || files.length === 0) return;
-    const newItems: UploadedImage[] = Array.from(files).map((f) => ({
-      src: URL.createObjectURL(f),
-      name: f.name,
-      takenAt: undefined,
-    }));
-    setImages((prev) => [...prev, ...newItems]);
   }
 
   return (
@@ -733,5 +723,4 @@ export default function AppointmentsCalendar() {
     </div>
   );
 }
-
 
