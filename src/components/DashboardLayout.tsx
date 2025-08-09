@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ImagingWorkflow from "@/components/ImagingWorkflow";
+import AppointmentsCalendar from "@/components/AppointmentsCalendar";
 import PatientManagement from "@/components/PatientManagement";
 import type { Patient } from "@/types/patient";
 import { 
@@ -485,13 +486,7 @@ const DashboardLayout = () => {
             </TabsContent>
 
             <TabsContent value="appointments" className="mt-6">
-              <Card className="clinical-shadow">
-                <CardContent className="p-12 text-center">
-                  <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Appointment Scheduling</h3>
-                  <p className="text-muted-foreground">Advanced scheduling with online bookings and SMS reminders.</p>
-                </CardContent>
-              </Card>
+              <AppointmentsCalendar patients={patients} />
             </TabsContent>
 
             <TabsContent value="imaging" className="mt-6">

@@ -25,6 +25,7 @@ const store = Object.create(null);
 // Patients persistence (JSON file on disk)
 const DATA_DIR = __dirname;
 const PATIENTS_FILE = path.join(DATA_DIR, 'patients.json');
+const APPTS_FILE = path.join(DATA_DIR, 'appointments.json');
 
 function readPatientsFromDisk() {
   try {
@@ -46,6 +47,23 @@ function writePatientsToDisk(patients) {
 
 function getNextPatientId(patients) {
   const ids = patients.map((p) => Number(p.id) || 0);
+  return ids.length ? Math.max(...ids) + 1 : 1;
+}
+
+function readAppointments() {
+  try {
+    if (!fs.existsSync(APPTS_FILE)) {
+      fs.writeFileSync(APPTS_FILE, JSON.stringify([], null, 2));
+      return [];
+    }
+    return JSON.parse(fs.readFileSync(APPTS_FILE, 'utf8')) || [];
+  } catch { return []; }
+}
+function writeAppointments(appts) {
+  fs.writeFileSync(APPTS_FILE, JSON.stringify(appts, null, 2));
+}
+function nextApptId(appts) {
+  const ids = appts.map((a) => Number(a.id) || 0);
   return ids.length ? Math.max(...ids) + 1 : 1;
 }
 
@@ -227,6 +245,42 @@ app.patch('/patients/:id', (req, res) => {
   patients[idx] = updated;
   writePatientsToDisk(patients);
   res.json(updated);
+});
+
+// ---------------- Appointments API ----------------
+app.get('/appointments', (req, res) => {
+  res.json({ appointments: readAppointments() });
+});
+app.post('/appointments', (req, res) => {
+  const appts = readAppointments();
+  const id = nextApptId(appts);
+  const body = req.body || {};
+  const appt = { id, ...body };
+  appts.push(appt);
+  writeAppointments(appts);
+  res.status(201).json(appt);
+});
+app.patch('/appointments/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const appts = readAppointments();
+  const idx = appts.findIndex(a => Number(a.id) === id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  appts[idx] = { ...appts[idx], ...(req.body || {}), id };
+  writeAppointments(appts);
+  res.json(appts[idx]);
+});
+app.delete('/appointments/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const appts = readAppointments();
+  const next = appts.filter(a => Number(a.id) !== id);
+  writeAppointments(next);
+  res.json({ ok: true });
+});
+
+// Notification stub
+app.post('/appointments/:id/notify', (req, res) => {
+  // In a real system, integrate with SMS/email providers
+  res.json({ ok: true, sent: ['sms', 'email'] });
 });
 
 app.listen(PORT, () => {
