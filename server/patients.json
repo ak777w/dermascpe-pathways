@@ -1,5 +1,22 @@
 [
   {
+    "id": 4,
+    "name": "haine cherw",
+    "age": 69,
+    "gender": "Male",
+    "phone": "567576765765765",
+    "email": "peepee@gmail.com",
+    "medicare": "234567890",
+    "lastVisit": "New",
+    "nextAppointment": "Not scheduled",
+    "riskLevel": "Low",
+    "totalLesions": 0,
+    "newLesions": 0,
+    "status": "Active",
+    "skinType": "Unknown",
+    "familyHistory": "Unknown"
+  },
+  {
     "id": 3,
     "name": "julie",
     "age": 87,
